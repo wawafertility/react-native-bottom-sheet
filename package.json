@@ -1,11 +1,9 @@
 {
-  "name": "@gorhom/bottom-sheet",
+  "name": "@discord/bottom-sheet",
   "version": "4.6.1",
   "description": "A performant interactive bottom sheet with fully configurable options 🚀",
-  "main": "lib/commonjs/index",
-  "module": "lib/module/index",
-  "types": "lib/typescript/index.d.ts",
-  "react-native": "src/index.ts",
+  "main": "src/index.ts",
+  "source": "src/index.ts",
   "files": [
     "src",
     "lib",
@@ -20,7 +18,7 @@
     "reanimated",
     "sheet"
   ],
-  "repository": "https://github.com/gorhom/react-native-bottom-sheet",
+  "repository": "https://github.com/discord/react-native-bottom-sheet",
   "author": "Mo Gorhom (https://gorhom.dev)",
   "license": "MIT",
   "bugs": {
@@ -62,13 +60,14 @@
     "react-native": "^0.62.2",
     "react-native-builder-bob": "^0.18.1",
     "react-native-gesture-handler": "^1.10.3",
-    "react-native-reanimated": "^2.8.0",
+    "react-native-reanimated": "^3.4.2",
     "release-it": "^17.0.1",
-    "typescript": "^4.2.4"
+    "typescript": "^5.0.3"
   },
   "peerDependencies": {
     "@types/react": "*",
     "@types/react-native": "*",
+    "@shopify/flash-list": "*",
     "react": "*",
     "react-native": "*",
     "react-native-gesture-handler": ">=1.10.1",

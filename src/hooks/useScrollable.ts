@@ -1,6 +1,6 @@
 import { useCallback, RefObject, useRef } from 'react';
+import { findNodeHandle } from 'react-native';
 import { useSharedValue } from 'react-native-reanimated';
-import { getRefNativeTag } from '../utilities/getRefNativeTag';
 import { SCROLLABLE_STATE, SCROLLABLE_TYPE } from '../constants';
 import type { ScrollableRef, Scrollable } from '../types';
 
@@ -18,6 +18,8 @@ export const useScrollable = () => {
     SCROLLABLE_STATE.UNDETERMINED
   );
   const isScrollableRefreshable = useSharedValue<boolean>(false);
+  const isScrollableLocked = useSharedValue<boolean>(true);
+  const isScrollEnded = useSharedValue<boolean>(true);
 
   // callbacks
   const setScrollableRef = useCallback((ref: ScrollableRef) => {
@@ -38,7 +40,7 @@ export const useScrollable = () => {
     // find node handle id
     let id;
     try {
-      id = getRefNativeTag(ref);
+      id = findNodeHandle(ref.current);
     } catch {
       return;
     }
@@ -63,6 +65,8 @@ export const useScrollable = () => {
     animatedScrollableContentOffsetY,
     animatedScrollableOverrideState,
     isScrollableRefreshable,
+    isScrollableLocked,
+    isScrollEnded,
     setScrollableRef,
     removeScrollableRef,
   };

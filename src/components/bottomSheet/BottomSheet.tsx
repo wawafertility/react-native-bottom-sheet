@@ -34,6 +34,7 @@ import {
   BottomSheetInternalProvider,
   BottomSheetProvider,
 } from '../../contexts';
+import type { BottomSheetInternalContextType } from '../../contexts/internal';
 import BottomSheetContainer from '../bottomSheetContainer';
 import BottomSheetGestureHandlersProvider from '../bottomSheetGestureHandlersProvider';
 import BottomSheetBackdropContainer from '../bottomSheetBackdropContainer';
@@ -100,6 +101,7 @@ const BottomSheetComponent = forwardRef<BottomSheet, BottomSheetProps>(
       // configurations
       index: _providedIndex = 0,
       snapPoints: _providedSnapPoints,
+      initialPosition = INITIAL_POSITION,
       animateOnMount = DEFAULT_ANIMATE_ON_MOUNT,
       enableContentPanningGesture = DEFAULT_ENABLE_CONTENT_PANNING_GESTURE,
       enableHandlePanningGesture = DEFAULT_ENABLE_HANDLE_PANNING_GESTURE,
@@ -157,7 +159,7 @@ const BottomSheetComponent = forwardRef<BottomSheet, BottomSheetProps>(
       handleComponent,
       backdropComponent,
       backgroundComponent,
-      footerComponent,
+      renderFooter,
       children: Content,
     } = props;
     //#endregion
@@ -215,7 +217,7 @@ const BottomSheetComponent = forwardRef<BottomSheet, BottomSheetProps>(
     const animatedCurrentIndex = useReactiveSharedValue(
       animateOnMount ? -1 : _providedIndex
     );
-    const animatedPosition = useSharedValue(INITIAL_POSITION);
+    const animatedPosition = useSharedValue(initialPosition);
     const animatedNextPosition = useSharedValue(INITIAL_VALUE);
     const animatedNextPositionIndex = useSharedValue(0);
 
@@ -286,6 +288,8 @@ const BottomSheetComponent = forwardRef<BottomSheet, BottomSheetProps>(
       animatedScrollableContentOffsetY,
       animatedScrollableOverrideState,
       isScrollableRefreshable,
+      isScrollableLocked,
+      isScrollEnded,
       setScrollableRef,
       removeScrollableRef,
     } = useScrollable();
@@ -355,7 +359,7 @@ const BottomSheetComponent = forwardRef<BottomSheet, BottomSheetProps>(
       isInTemporaryPosition,
       keyboardBehavior,
     ]);
-    const animatedScrollableState = useDerivedValue(() => {
+    const animatedScrollableState = useDerivedValue<SCROLLABLE_STATE>(() => {
       /**
        * if scrollable override state is set, then we just return its value.
        */
@@ -375,6 +379,13 @@ const BottomSheetComponent = forwardRef<BottomSheet, BottomSheetProps>(
        * if sheet state is extended, then unlock scrolling
        */
       if (animatedSheetState.value === SHEET_STATE.EXTENDED) {
+        return SCROLLABLE_STATE.UNLOCKED;
+      }
+
+      /**
+       * if the current scrollable is blocked from translation, unlock scrolling
+       */
+      if (!isScrollableLocked.value) {
         return SCROLLABLE_STATE.UNLOCKED;
       }
 
@@ -606,9 +617,10 @@ const BottomSheetComponent = forwardRef<BottomSheet, BottomSheetProps>(
       [_providedOnChange, animatedCurrentIndex]
     );
     const handleOnAnimate = useCallback(
-      function handleOnAnimate(toPoint: number) {
-        const snapPoints = animatedSnapPoints.value;
-        const toIndex = snapPoints.indexOf(toPoint);
+      function handleOnAnimate(toPoint: number, source: ANIMATION_SOURCE, snapPoints: number[]) {
+        const closedPosition = animatedClosedPosition.value;
+        const toIndex =
+          toPoint === closedPosition ? -1 : snapPoints.indexOf(toPoint);
 
         print({
           component: BottomSheet.name,
@@ -623,11 +635,14 @@ const BottomSheetComponent = forwardRef<BottomSheet, BottomSheetProps>(
           return;
         }
 
-        if (toIndex !== animatedCurrentIndex.value) {
-          _providedOnAnimate(animatedCurrentIndex.value, toIndex);
-        }
+        _providedOnAnimate(animatedCurrentIndex.value, toIndex, source);
       },
-      [_providedOnAnimate, animatedSnapPoints, animatedCurrentIndex]
+      [
+        _providedOnAnimate,
+        animatedSnapPoints,
+        animatedClosedPosition,
+        animatedCurrentIndex,
+      ]
     );
     //#endregion
 
@@ -706,7 +721,7 @@ const BottomSheetComponent = forwardRef<BottomSheet, BottomSheetProps>(
         /**
          * fire `onAnimate` callback
          */
-        runOnJS(handleOnAnimate)(position);
+        runOnJS(handleOnAnimate)(position, source, animatedSnapPoints.value);
 
         /**
          * force animation configs from parameters, if provided
@@ -1054,7 +1069,7 @@ const BottomSheetComponent = forwardRef<BottomSheet, BottomSheetProps>(
     //#endregion
 
     //#region contexts variables
-    const internalContextVariables = useMemo(
+    const internalContextVariables = useMemo<BottomSheetInternalContextType>(
       () => ({
         enableContentPanningGesture,
         enableDynamicSizing,
@@ -1084,6 +1099,8 @@ const BottomSheetComponent = forwardRef<BottomSheet, BottomSheetProps>(
         isInTemporaryPosition,
         isContentHeightFixed,
         isScrollableRefreshable,
+        isScrollableLocked,
+        isScrollEnded,
         shouldHandleKeyboardEvents,
         simultaneousHandlers: _providedSimultaneousHandlers,
         waitFor: _providedWaitFor,
@@ -1119,6 +1136,8 @@ const BottomSheetComponent = forwardRef<BottomSheet, BottomSheetProps>(
         shouldHandleKeyboardEvents,
         animatedScrollableContentOffsetY,
         isScrollableRefreshable,
+        isScrollableLocked,
+        isScrollEnded,
         isContentHeightFixed,
         isInTemporaryPosition,
         enableContentPanningGesture,
@@ -1165,8 +1184,6 @@ const BottomSheetComponent = forwardRef<BottomSheet, BottomSheetProps>(
     //#region styles
     const containerAnimatedStyle = useAnimatedStyle(
       () => ({
-        opacity:
-          Platform.OS === 'android' && animatedIndex.value === -1 ? 0 : 1,
         transform: [
           {
             translateY: animatedPosition.value,
@@ -1428,7 +1445,11 @@ const BottomSheetComponent = forwardRef<BottomSheet, BottomSheetProps>(
            */
           (Platform.OS === 'android' &&
             keyboardBehavior === KEYBOARD_BEHAVIOR.interactive &&
-            android_keyboardInputMode === KEYBOARD_INPUT_MODE.adjustResize)
+            android_keyboardInputMode === KEYBOARD_INPUT_MODE.adjustResize) ||
+          /**
+           * if the sheet is closing, then exit then method
+           */
+          animatedNextPositionIndex.value === -1
         ) {
           animatedKeyboardHeightInContainer.value = 0;
           return;
@@ -1642,10 +1663,8 @@ const BottomSheetComponent = forwardRef<BottomSheet, BottomSheetProps>(
                   >
                     {typeof Content === 'function' ? <Content /> : Content}
 
-                    {footerComponent && (
-                      <BottomSheetFooterContainer
-                        footerComponent={footerComponent}
-                      />
+                    {renderFooter && (
+                      <BottomSheetFooterContainer renderFooter={renderFooter} />
                     )}
                   </BottomSheetDraggableView>
                 </Animated.View>

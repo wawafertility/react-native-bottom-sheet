@@ -1,15 +1,17 @@
 import React, { useCallback, useEffect } from 'react';
-import Animated from 'react-native-reanimated';
+import type Animated from 'react-native-reanimated';
 import { useBottomSheetInternal } from './useBottomSheetInternal';
-import { getRefNativeTag } from '../utilities/getRefNativeTag';
-import { SCROLLABLE_TYPE } from '../constants';
+import type { SCROLLABLE_TYPE } from '../constants';
 import type { Scrollable } from '../types';
+import { Platform, findNodeHandle } from 'react-native';
 
 export const useScrollableSetter = (
   ref: React.RefObject<Scrollable>,
   type: SCROLLABLE_TYPE,
   contentOffsetY: Animated.SharedValue<number>,
   refreshable: boolean,
+  scrollBuffer: number | undefined,
+  preserveScrollMomentum: boolean | undefined,
   useFocusHook = useEffect
 ) => {
   // hooks
@@ -18,8 +20,12 @@ export const useScrollableSetter = (
     animatedScrollableContentOffsetY: rootScrollableContentOffsetY,
     isContentHeightFixed,
     isScrollableRefreshable,
+    isScrollableLocked,
     setScrollableRef,
     removeScrollableRef,
+    animatedContainerHeight,
+    animatedContentHeight,
+    isScrollEnded,
   } = useBottomSheetInternal();
 
   // callbacks
@@ -28,10 +34,13 @@ export const useScrollableSetter = (
     rootScrollableContentOffsetY.value = contentOffsetY.value;
     animatedScrollableType.value = type;
     isScrollableRefreshable.value = refreshable;
+    // Keep isScrollableLocked value if the scrollable is still scrolling
+    // Android scrollview doesn't bounce so we need to set isScrollableLocked so that the sheet can be pulled up/down
+    isScrollableLocked.value = (!isScrollEnded.value && isScrollableLocked.value) || (!preserveScrollMomentum && !scrollBuffer) || (Platform.OS === 'android' && animatedContentHeight.value <= animatedContainerHeight.value);
     isContentHeightFixed.value = false;
 
     // set current scrollable ref
-    const id = getRefNativeTag(ref);
+    const id = findNodeHandle(ref.current);
     if (id) {
       setScrollableRef({
         id: id,
@@ -52,6 +61,7 @@ export const useScrollableSetter = (
     rootScrollableContentOffsetY,
     contentOffsetY,
     isScrollableRefreshable,
+    isScrollableLocked,
     isContentHeightFixed,
     setScrollableRef,
     removeScrollableRef,

@@ -117,6 +117,7 @@ const BottomSheetBackdropComponent = ({
   //#endregion
 
   return pressBehavior !== 'none' ? (
+    // @ts-ignore
     <TapGestureHandler onGestureEvent={gestureHandler}>
       <Animated.View
         style={containerStyle}
