@@ -1,9 +1,6 @@
 import { ReactNode } from 'react';
 import type { ViewProps } from 'react-native';
-import type {
-  BottomSheetVariables,
-  NullableAccessibilityProps,
-} from '../../types';
+import type { BottomSheetVariables } from '../../types';
 
 export interface BottomSheetBackdropProps
   extends Pick<ViewProps, 'style'>,
@@ -12,8 +9,7 @@ export interface BottomSheetBackdropProps
 export type BackdropPressBehavior = 'none' | 'close' | 'collapse' | number;
 
 export interface BottomSheetDefaultBackdropProps
-  extends BottomSheetBackdropProps,
-    NullableAccessibilityProps {
+  extends BottomSheetBackdropProps {
   /**
    * Backdrop opacity.
    * @type number

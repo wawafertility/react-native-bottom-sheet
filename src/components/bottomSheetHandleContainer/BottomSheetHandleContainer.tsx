@@ -92,6 +92,10 @@ function BottomSheetHandleContainerComponent({
     >
       <Animated.View
         key="BottomSheetHandleContainer"
+        accessible={true}
+        accessibilityRole="adjustable"
+        accessibilityLabel="Bottom Sheet handle"
+        accessibilityHint="Drag up or down to extend or minimize the Bottom Sheet"
         onLayout={handleContainerLayout}
       >
         <HandleComponent
