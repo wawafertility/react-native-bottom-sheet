@@ -1,5 +1,5 @@
-import React, { memo, useCallback, useMemo, useRef, useState } from 'react';
-import { ViewProps } from 'react-native';
+import React, { memo, useCallback, useMemo, useState } from 'react';
+import type { ViewProps } from 'react-native';
 import Animated, {
   interpolate,
   Extrapolate,
@@ -36,7 +36,6 @@ const BottomSheetBackdropComponent = ({
 }: BottomSheetDefaultBackdropProps) => {
   //#region hooks
   const { snapToIndex, close } = useBottomSheet();
-  const isMounted = useRef(false);
   //#endregion
 
   //#region defaults
@@ -68,8 +67,7 @@ const BottomSheetBackdropComponent = ({
   }, [snapToIndex, close, disappearsOnIndex, pressBehavior, onPress]);
   const handleContainerTouchability = useCallback(
     (shouldDisableTouchability: boolean) => {
-      isMounted.current &&
-        setPointerEvents(shouldDisableTouchability ? 'none' : 'auto');
+      setPointerEvents(shouldDisableTouchability ? 'none' : 'auto');
     },
     []
   );
@@ -117,7 +115,6 @@ const BottomSheetBackdropComponent = ({
   //#endregion
 
   return pressBehavior !== 'none' ? (
-    // @ts-ignore
     <TapGestureHandler onGestureEvent={gestureHandler}>
       <Animated.View
         style={containerStyle}
