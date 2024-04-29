@@ -1,16 +1,11 @@
 import type React from 'react';
 import type { ViewProps } from 'react-native';
 import type { AnimateProps } from 'react-native-reanimated';
-import type {
-  BottomSheetVariables,
-  NullableAccessibilityProps,
-} from '../../types';
+import type { BottomSheetVariables } from '../../types';
 
 export interface BottomSheetHandleProps extends BottomSheetVariables {}
 
-export interface BottomSheetDefaultHandleProps
-  extends BottomSheetHandleProps,
-    NullableAccessibilityProps {
+export interface BottomSheetDefaultHandleProps extends BottomSheetHandleProps {
   /**
    * View style to be applied to the handle container.
    * @type Animated.AnimateStyle<ViewStyle> | ViewStyle

@@ -1,11 +1,4 @@
-import React, {
-  memo,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import React, { memo, useCallback, useMemo, useRef, useState } from 'react';
 import { ViewProps } from 'react-native';
 import Animated, {
   interpolate,
@@ -26,10 +19,6 @@ import {
   DEFAULT_DISAPPEARS_ON_INDEX,
   DEFAULT_ENABLE_TOUCH_THROUGH,
   DEFAULT_PRESS_BEHAVIOR,
-  DEFAULT_ACCESSIBLE,
-  DEFAULT_ACCESSIBILITY_ROLE,
-  DEFAULT_ACCESSIBILITY_LABEL,
-  DEFAULT_ACCESSIBILITY_HINT,
 } from './constants';
 import { styles } from './styles';
 import type { BottomSheetDefaultBackdropProps } from './types';
@@ -44,10 +33,6 @@ const BottomSheetBackdropComponent = ({
   onPress,
   style,
   children,
-  accessible: _providedAccessible = DEFAULT_ACCESSIBLE,
-  accessibilityRole: _providedAccessibilityRole = DEFAULT_ACCESSIBILITY_ROLE,
-  accessibilityLabel: _providedAccessibilityLabel = DEFAULT_ACCESSIBILITY_LABEL,
-  accessibilityHint: _providedAccessibilityHint = DEFAULT_ACCESSIBILITY_HINT,
 }: BottomSheetDefaultBackdropProps) => {
   //#region hooks
   const { snapToIndex, close } = useBottomSheet();
@@ -129,42 +114,27 @@ const BottomSheetBackdropComponent = ({
     },
     [disappearsOnIndex]
   );
-
-  // addressing updating the state after unmounting.
-  // [link](https://github.com/gorhom/react-native-bottom-sheet/issues/1376)
-  useEffect(() => {
-    isMounted.current = true;
-    return () => {
-      isMounted.current = false;
-    };
-  }, []);
   //#endregion
-
-  const AnimatedView = (
-    <Animated.View
-      style={containerStyle}
-      pointerEvents={pointerEvents}
-      accessible={_providedAccessible ?? undefined}
-      accessibilityRole={_providedAccessibilityRole ?? undefined}
-      accessibilityLabel={_providedAccessibilityLabel ?? undefined}
-      accessibilityHint={
-        _providedAccessibilityHint
-          ? _providedAccessibilityHint
-          : `Tap to ${
-              typeof pressBehavior === 'string' ? pressBehavior : 'move'
-            } the Bottom Sheet`
-      }
-    >
-      {children}
-    </Animated.View>
-  );
 
   return pressBehavior !== 'none' ? (
     <TapGestureHandler onGestureEvent={gestureHandler}>
-      {AnimatedView}
+      <Animated.View
+        style={containerStyle}
+        pointerEvents={pointerEvents}
+        accessible={true}
+        accessibilityRole="button"
+        accessibilityLabel="Bottom Sheet backdrop"
+        accessibilityHint={`Tap to ${
+          typeof pressBehavior === 'string' ? pressBehavior : 'move'
+        } the Bottom Sheet`}
+      >
+        {children}
+      </Animated.View>
     </TapGestureHandler>
   ) : (
-    AnimatedView
+    <Animated.View pointerEvents={pointerEvents} style={containerStyle}>
+      {children}
+    </Animated.View>
   );
 };
 
